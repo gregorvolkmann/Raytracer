@@ -3,7 +3,7 @@
 
 from PIL import Image
 from objects import *
-from misc import Color
+from misc import *
 
 image_width = 400
 image_height = 400
@@ -36,18 +36,40 @@ class Raytracer:
                             p = ray.pointAtParameter(maxdist)
                             n = object.normalAt(p)
                             d = ray.direction
-                            
+
                             color = object.colorAt(ray)
+
+                            # CALC LIGHT
+                            light_maxdist = float('inf')
                             for light in filter(lambda x: isinstance(x, Light), self.object_list):
                                 l = (light - p).normalized()
                                 lr = l.mirror(n)
                                 light_ray = Ray(p, l)
-                                # object zwischen Lichtstrahl
-                                for object in filter(lambda x: not isinstance(x, Light), self.object_list):
-                                    light_hitdist = object.intersectionParameter(light_ray)
-                                    if light_hitdist:
-                                        if light_hitdist > 0:
-                                            color = Color(0, 0, 0)
+                                # TODO intensity range
+                                # ambient
+                                ca = light.color
+                                ka = object.material.ambient_coefficient
+                                c_ambient = ca * ka
+                                # diffuse
+                                cin = light.color
+                                kd = object.material.diffuse_coefficient
+                                cos_fi = l.dot(n)
+                                c_diffuse = cin * kd * cos_fi
+                                # specular
+                                cin = light.color
+                                ks = object.material.specular_coefficient
+                                cos_0_n = (lr.dot(d*-1))**object.material.roughness
+                                c_specular = cin * ks * cos_0_n
+
+                                color = c_ambient + c_diffuse + c_specular
+                                # light_dist = (light - p).length()
+                                # # object zwischen Lichtstrahl
+                                # for object in filter(lambda x: not isinstance(x, Light), self.object_list):
+                                #     object_dist = object.intersectionParameter(light_ray)
+                                #     if object_dist:
+                                #         if object_dist < light_dist and object_dist > 5e-16:
+                                #             # TODO Schatten berechnen
+                                #             color = Color(0, 0, 0)
 
                 image.putpixel((x, y), color.rgb())
         return image.rotate(180)
@@ -64,12 +86,12 @@ if __name__ == '__main__':
 
     tracer = Raytracer(camera)
 
-    plane = Plane(Point(0, 0, 0), Vector(0, 1, 0), Color(125, 125, 125))
-    sphere_red = Sphere(Point(1.5, 2, 0), 1, Color(255, 0, 0))
-    sphere_green = Sphere(Point(-1.5, 2, 0), 1, Color(0, 255, 0))
-    sphere_blue = Sphere(Point(0, 4.5, 0), 1, Color(0, 0, 255))
-    triangle = Triangle(Point(1.5, 2, 0), Point(-1.5, 2, 0), Point(0, 4.5, 0), Color(255, 255, 0))
-    light = PointLight(30, 30, 10, 1)
+    plane = Plane(Point(0, 0, 0), Vector(0, 1, 0), CheckerboardMaterial(Color(255, 255, 255), 1.0, 0.6, 0.2, Color(0, 0, 0), 1))
+    sphere_red = Sphere(Point(1.5, 2, 0), 1,  Material(Color(255, 0, 0), 1.0, 0.6, 0.2))
+    sphere_green = Sphere(Point(-1.5, 2, 0), 1,  Material(Color(0, 255, 0), 1.0, 0.6, 0.2))
+    sphere_blue = Sphere(Point(0, 4.5, 0), 1,  Material(Color(0, 0, 255), 1.0, 0.6, 0.2))
+    triangle = Triangle(Point(1.5, 2, 0), Point(-1.5, 2, 0), Point(0, 4.5, 0),  Material(Color(255, 255, 0), 1.0, 0.6, 0.2))
+    light = PointLight(30, 30, 10, Color(255, 255, 255))
 
     tracer.addObject(plane)
     tracer.addObject(sphere_red)
@@ -83,4 +105,4 @@ if __name__ == '__main__':
 
     img = tracer.render_image()
     img.show()
-    img.save('img.jpg', 'JPEG')
+    img.save('img.bmp', 'BMP')
