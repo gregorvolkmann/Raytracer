@@ -1,5 +1,5 @@
 # Raytracer
-A raytracer I had to code for computer graphics at Hochschule RheinMain.
+A raytracer I wrote for my course `computer graphics` at Hochschule RheinMain.
 
     raytracer.py <mode>
 
