@@ -64,11 +64,16 @@ class Color(object):
         self.g = int(g)
         self.b = int(b)
 
+    # FRAGEN
+    # https://www.youtube.com/watch?v=LKnqECcg6Gw
     def __add__(self, c):
         return Color(self.r+c.r, self.g+c.g, self.b+c.b)
 
     def __mul__(self, k):
         return Color(self.r*k, self.g*k, self.b*k)
+
+    def __div__(self, k):
+        return Color(self.r/k, self.g/k, self.b/k)
 
     def intensity(self):
         i = (self.r+self.g+self.b) / 3

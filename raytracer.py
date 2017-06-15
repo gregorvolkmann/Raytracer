@@ -92,6 +92,28 @@ class Raytracer:
         ycomp = self.camera.u.scale(y*self.camera.pixel_height - self.camera.height/2)
         return Ray(self.camera.e, self.camera.f+xcomp+ycomp)
 
+    def calc_rays(self, x, y):
+        rays = []
+        aa = self.camera.pixel_width/4
+        xcomp = self.camera.s.scale(x*self.camera.pixel_width - self.camera.width/2 - aa)
+        ycomp = self.camera.u.scale(y*self.camera.pixel_height - self.camera.height/2 - aa)
+        rays.append(Ray(self.camera.e, self.camera.f+xcomp+ycomp))
+
+        xcomp = self.camera.s.scale(x*self.camera.pixel_width - self.camera.width/2 + aa)
+        ycomp = self.camera.u.scale(y*self.camera.pixel_height - self.camera.height/2 - aa)
+        rays.append(Ray(self.camera.e, self.camera.f+xcomp+ycomp))
+
+        xcomp = self.camera.s.scale(x*self.camera.pixel_width - self.camera.width/2 - aa)
+        ycomp = self.camera.u.scale(y*self.camera.pixel_height - self.camera.height/2 + aa)
+        rays.append(Ray(self.camera.e, self.camera.f+xcomp+ycomp))
+
+        xcomp = self.camera.s.scale(x*self.camera.pixel_width - self.camera.width/2 + aa)
+        ycomp = self.camera.u.scale(y*self.camera.pixel_height - self.camera.height/2 + aa)
+        rays.append(Ray(self.camera.e, self.camera.f+xcomp+ycomp))
+
+        return rays
+
+
     def intersect(self, level, ray, max_level=MAXLEVEL):
         maxdist = float('inf')
         hitPointData = {}
@@ -122,6 +144,15 @@ class Raytracer:
                 ray = self.calc_ray(x, y)
                 color = self.traceRay(0, ray)
                 image.putpixel((x, y), color.rgb())
+        return image.rotate(180)
+
+    def render_image_recursive_aliased(self, AA_level=0):
+        for y in range(image_height):
+            for x in range(image_width):
+                color = BACKGROUND_COLOR
+                for ray in self.calc_rays(x, y):
+                    color += self.traceRay(0, ray)
+                image.putpixel((x, y), (color/4).rgb())
         return image.rotate(180)
 
     def shade(self, level, hitPointData):
@@ -184,8 +215,14 @@ class Raytracer:
         return Ray(hitPointData['p'], hitPointData['ray'].direction.mirror(hitPointData['object'].normalAt(hitPointData['p'])))
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print "raytracer.py <mode>\n0 - non recursive\n1 - recursive (grainy)"
+    if len(sys.argv) < 2:
+        print """
+            raytracer.py <mode>\n
+            modes:\n
+            0 - non recursive\n
+            1 - recursive (grainy)\n
+            2 - recursive aliased (grainy)\n
+            """
         sys.exit(-1)
 
     camera = Camera(e=Point(0.0, 1.8, 10), c=Point(0, 3, 0), up=Vector(0, 1, 1), fov=45, image_width=400, image_height=400)
@@ -218,6 +255,16 @@ if __name__ == '__main__':
         img = tracer.render_image_recursive()
         img.show()
         img.save('img_recursive.bmp', 'BMP')
+    elif sys.argv[1] == '2':
+        img = tracer.render_image_recursive_aliased()
+        img.show()
+        img.save('img_recursive_aliased.bmp', 'BMP')
     else:
-        print "raytracer.py <mode>\n1 - non recursive\n2 - recursive (grainy)"
+        print """
+            raytracer.py <mode>\n
+            modes:\n
+            0 - non recursive\n
+            1 - recursive (grainy)\n
+            2 - recursive aliased (grainy)\n
+            """
         sys.exit(-1)
