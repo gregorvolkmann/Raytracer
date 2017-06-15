@@ -96,9 +96,6 @@ class Raytracer:
         maxdist = float('inf')
         hitPointData = {}
         for object in filter(lambda x: not isinstance(x, Light), self.object_list):
-            if not isinstance(object, Plane) and level==max_level:
-                continue
-
             hitdist = object.intersectionParameter(ray)
             if level <= max_level:
                 if hitdist and hitdist < maxdist and hitdist > 0:
