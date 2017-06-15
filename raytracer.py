@@ -4,16 +4,18 @@
 # Code by Gregor Volkmann
 
 from PIL import Image
-from objects import *
 from misc import *
+from objects import *
 
+SHADOW_CONST = 0.25
 TOLERANCE = 5e-16
+BACKGROUND_COLOR = Color(0, 0, 0)
+MAXLEVEL = 1
+REFLECTION = 0.5
 
 image_width = 400
 image_height = 400
 image = Image.new('RGB', (image_width, image_height))
-BACKGROUND_COLOR = Color(0, 0, 0)
-SHADOW_CONST = 0.25
 
 class Raytracer:
     def __init__(self, camera):
@@ -88,6 +90,59 @@ class Raytracer:
         ycomp = self.camera.u.scale(y*self.camera.pixel_height - self.camera.height/2)
         return Ray(self.camera.e, self.camera.f+xcomp+ycomp)
 
+    def intersect(self, level, ray, max_level=MAXLEVEL):
+        maxdist = float('inf')
+        hitPointData = {}
+        for object in filter(lambda x: not isinstance(x, Light), self.object_list):
+            # Der Part damit sich die Kugeln nicht im Boden spiegeln bei MAXLEVEL = 1 (Lösungsansatz > 0)
+            if not isinstance(object, Plane) and level==max_level:
+                continue
+
+            hitdist = object.intersectionParameter(ray)
+            if level <= max_level:
+                if hitdist and hitdist < maxdist and hitdist > 0:
+                    maxdist = hitdist
+
+                    objects = filter(lambda x: not isinstance(x, Light) and not x is object, self.object_list[:])
+                    p = ray.pointAtParameter(hitdist)
+
+                    hitPointData['object'] = object
+                    hitPointData['objects'] = objects
+                    hitPointData['p'] = p
+                    hitPointData['ray'] = ray
+        return hitPointData
+
+    def traceRay(self, level, ray):
+        hitPointData = self.intersect(level, ray, MAXLEVEL)
+        if hitPointData:
+            return self.shade(level, hitPointData)
+        return BACKGROUND_COLOR
+
+    def render_image_recursive(self):
+        for y in range(image_height):
+            for x in range(image_width):
+                ray = self.calc_ray(x, y)
+                color = self.traceRay(0, ray)
+                image.putpixel((x, y), color.rgb())
+        return image.rotate(180)
+
+    def shade(self, level, hitPointData):
+        directColor = self.computeDirectLight(hitPointData)
+
+        reflectedRay = self.computeReflectedRay(hitPointData)
+        reflectColor = self.traceRay(level+1, reflectedRay)
+
+        # refractedRay = computeRefractedRay(hitPointData)
+        # refractColor = traceRay(level+1, refractedRay)
+
+        return directColor + reflectColor*REFLECTION # + refraction*refractedColor
+
+    def computeDirectLight(self, hitPointData):
+        return hitPointData['object'].colorAt(hitPointData['ray'])
+
+    def computeReflectedRay(self, hitPointData):
+        return Ray(hitPointData['p'], hitPointData['ray'].direction.mirror(hitPointData['object'].normalAt(hitPointData['p'])))
+
 if __name__ == '__main__':
     camera = Camera(e=Point(0.0, 1.8, 10), c=Point(0, 3, 0), up=Vector(0, 1, 1), fov=45, image_width=400, image_height=400)
     print(camera)
@@ -111,6 +166,7 @@ if __name__ == '__main__':
     for object in tracer.object_list:
         print(object)
 
-    img = tracer.render_image()
+    # img = tracer.render_image()
+    img = tracer.render_image_recursive()
     img.show()
     img.save('img.bmp', 'BMP')
