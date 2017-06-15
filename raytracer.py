@@ -53,13 +53,10 @@ class Raytracer:
 
                                 cin = light.color
                                 # shadow
-                                for object in filter(lambda x: not isinstance(x, Light) and x is not object, self.object_list):
+                                for object in filter(lambda x: not isinstance(x, Light) and not x is object, self.object_list):
                                     object_dist = object.intersectionParameter(light_ray)
-                                    if object_dist:
-                                        #     if object_dist > 5e-16:
+                                    if object_dist and object_dist > 5e-16:
                                         cin = object.colorAt(light_ray).intensity()
-
-
 
                                 # diffuse
                                 kd = object.material.diffuse_coefficient
