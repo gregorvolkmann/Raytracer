@@ -47,7 +47,7 @@ class Raytracer:
                                 light_ray = Ray(p, l)
                                 # TODO intensity range
                                 # ambient
-                                ca = light.color
+                                ca = object.colorAt(ray)
                                 ka = object.material.ambient_coefficient
                                 c_ambient = ca * ka
                                 # diffuse
