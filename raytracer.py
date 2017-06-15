@@ -45,32 +45,32 @@ class Raytracer:
                                 l = (light - p).normalized()
                                 lr = l.mirror(n)
                                 light_ray = Ray(p, l)
-                                # TODO intensity range
+                                light_dist = (light - p).length()
                                 # ambient
                                 ca = object.colorAt(ray)
                                 ka = object.material.ambient_coefficient
                                 c_ambient = ca * ka
-                                # diffuse
+
                                 cin = light.color
+                                # shadow
+                                for object in filter(lambda x: not isinstance(x, Light) and x is not object, self.object_list):
+                                    object_dist = object.intersectionParameter(light_ray)
+                                    if object_dist:
+                                        #     if object_dist > 5e-16:
+                                        cin = object.colorAt(light_ray).intensity()
+
+
+
+                                # diffuse
                                 kd = object.material.diffuse_coefficient
                                 cos_fi = l.dot(n)
                                 c_diffuse = cin * kd * cos_fi
                                 # specular
-                                cin = light.color
                                 ks = object.material.specular_coefficient
                                 cos_0_n = (lr.dot(d*-1))**object.material.roughness
                                 c_specular = cin * ks * cos_0_n
 
                                 color = c_ambient + c_diffuse + c_specular
-                                # light_dist = (light - p).length()
-                                # # object zwischen Lichtstrahl
-                                # for object in filter(lambda x: not isinstance(x, Light), self.object_list):
-                                #     object_dist = object.intersectionParameter(light_ray)
-                                #     if object_dist:
-                                #         if object_dist < light_dist and object_dist > 5e-16:
-                                #             # TODO Schatten berechnen
-                                #             color = Color(0, 0, 0)
-
                 image.putpixel((x, y), color.rgb())
         return image.rotate(180)
 

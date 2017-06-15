@@ -14,6 +14,10 @@ class Color(object):
     def __mul__(self, k):
         return Color(self.r*k, self.g*k, self.b*k)
 
+    def intensity(self):
+        i = (self.r+self.g+self.b) / 3
+        return Color(i, i, i)
+
     def rgb(self):
         return (int(self.r), int(self.g), int(self.b))
 
