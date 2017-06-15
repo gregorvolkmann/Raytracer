@@ -8,7 +8,7 @@ from misc import Color
 image_width = 400
 image_height = 400
 image = Image.new('RGB', (image_width, image_height))
-BACKGROUND_COLOR = Color(255, 255, 255)
+BACKGROUND_COLOR = Color(0, 0, 0)
 
 class Raytracer:
     def __init__(self, camera):
@@ -34,7 +34,7 @@ class Raytracer:
                             maxdist = hitdist
                             color = object.colorAt(ray)
                 image.putpixel((x, y), color.rgb())
-        return image
+        return image.rotate(180)
 
     # https://www.python.org/dev/peps/pep-0008/#other-recommendations
     def calc_ray(self, x, y):
@@ -45,12 +45,24 @@ class Raytracer:
 if __name__ == '__main__':
     camera = Camera(e=Point(0.0, 1.8, 10), c=Point(0, 3, 0), up=Vector(0, 1, 1), fov=45, image_width=400, image_height=400)
     print(camera)
-    plane = Plane(Point(0, 0, 0), Vector(0, 1, 0))
-    print(plane)
 
     tracer = Raytracer(camera)
+
+    plane = Plane(Point(0, 0, 0), Vector(0, 1, 0))
+    sphere_red = Sphere(Point(1.5, 2, 0), 1, Color(255, 0, 0))
+    sphere_green = Sphere(Point(-1.5, 2, 0), 1, Color(0, 255, 0))
+    sphere_blue = Sphere(Point(0, 4.5, 0), 1, Color(0, 0, 255))
+    triangle = Triangle(Point(1.5, 2, 0), Point(-1.5, 2, 0), Point(0, 4.5, 0), Color(255, 255, 0))
+
     tracer.addObject(plane)
+    tracer.addObject(sphere_red)
+    tracer.addObject(sphere_green)
+    tracer.addObject(sphere_blue)
+    tracer.addObject(triangle)
+
+    for object in tracer.object_list:
+        print(object)
 
     img = tracer.render_image()
     img.show()
-    img.save('img.jpg', 'JPEG')
+    # img.save('img.jpg', 'JPEG')
