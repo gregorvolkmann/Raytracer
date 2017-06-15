@@ -3,7 +3,9 @@
 
 # Code by Gregor Volkmann
 
+import sys
 from PIL import Image
+
 from misc import *
 from objects import *
 
@@ -94,7 +96,6 @@ class Raytracer:
         maxdist = float('inf')
         hitPointData = {}
         for object in filter(lambda x: not isinstance(x, Light), self.object_list):
-            # Der Part damit sich die Kugeln nicht im Boden spiegeln bei MAXLEVEL = 1 (Lösungsansatz > 0)
             if not isinstance(object, Plane) and level==max_level:
                 continue
 
@@ -138,15 +139,13 @@ class Raytracer:
         return directColor + reflectColor*REFLECTION # + refraction*refractedColor
 
     def computeDirectLight(self, hitPointData):
-        # return hitPointData['object'].colorAt(hitPointData['ray'])
-
-
         p = hitPointData['p']
         object = hitPointData['object']
         n = hitPointData['object'].normalAt(hitPointData['p'])
         ray = hitPointData['ray']
         d = self.computeReflectedRay(hitPointData).direction
 
+        #TODO refactor light calculation
         # CALC LIGHT
         for light in filter(lambda x: isinstance(x, Light), self.object_list):
             l = (light - p).normalized()
@@ -188,6 +187,10 @@ class Raytracer:
         return Ray(hitPointData['p'], hitPointData['ray'].direction.mirror(hitPointData['object'].normalAt(hitPointData['p'])))
 
 if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print "raytracer.py <mode>\n0 - non recursive\n1 - recursive (grainy)"
+        sys.exit(-1)
+
     camera = Camera(e=Point(0.0, 1.8, 10), c=Point(0, 3, 0), up=Vector(0, 1, 1), fov=45, image_width=400, image_height=400)
     print(camera)
 
@@ -210,7 +213,14 @@ if __name__ == '__main__':
     for object in tracer.object_list:
         print(object)
 
-    # img = tracer.render_image()
-    img = tracer.render_image_recursive()
-    img.show()
-    img.save('img.bmp', 'BMP')
+    if sys.argv[1] == '0':
+        img = tracer.render_image()
+        img.show()
+        img.save('img_non_recursive.bmp', 'BMP')
+    elif sys.argv[1] == '1':
+        img = tracer.render_image_recursive()
+        img.show()
+        img.save('img_recursive.bmp', 'BMP')
+    else:
+        print "raytracer.py <mode>\n1 - non recursive\n2 - recursive (grainy)"
+        sys.exit(-1)
