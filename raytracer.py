@@ -24,8 +24,8 @@ class Raytracer(object):
         self.camera = camera
         self.object_list = []
 
-    def addObject(self, object):
-        self.object_list.append(object)
+    def addObject(self, o):
+        self.object_list.append(o)
 
     # http://effbot.org/imagingbook/image.htm
     def render_image(self):
@@ -36,31 +36,32 @@ class Raytracer(object):
                 ray = self.calc_ray(x, y)
                 maxdist = float('inf')
                 color = BACKGROUND_COLOR
-                for object in filter(lambda x: not isinstance(x, Light), self.object_list):
-                    hitdist = object.intersectionParameter(ray)
+                # aggregate object inside renderdistance
+                for intersection_object in [intersection_object for intersection_object in self.object_list if not isinstance(intersection_object, Light)]:
+                    hitdist = intersection_object.intersectionParameter(ray)
                     if hitdist:
                         if hitdist < maxdist and hitdist > 0:
                             maxdist = hitdist
 
                             p = ray.pointAtParameter(maxdist)
-                            n = object.normalAt(p)
+                            n = intersection_object.normalAt(p)
                             d = ray.direction
 
-                            color = object.colorAt(ray)
+                            color = intersection_object.colorAt(ray)
 
-                            # CALC LIGHT
-                            for light in filter(lambda x: isinstance(x, Light), self.object_list):
+                            # calculate light
+                            for light in [light for light in self.object_list if isinstance(light, Light)]:
                                 l = (light - p).normalized()
                                 lr = l.mirror(n)
                                 light_ray = Ray(p, l)
 
                                 # ambient
-                                ca = object.colorAt(ray)
-                                ka = object.material.ambient_coefficient
+                                ca = intersection_object.colorAt(ray)
+                                ka = intersection_object.material.ambient_coefficient
                                 c_ambient = ca * ka
                                 # diffuse
                                 cin = light.color
-                                kd = object.material.diffuse_coefficient
+                                kd = intersection_object.material.diffuse_coefficient
                                 cos_fi = l.dot(n)
                                 c_diffuse = cin * kd * cos_fi
                                 # specular
@@ -68,14 +69,14 @@ class Raytracer(object):
                                     cin = Color(0, 0, 0)
                                 else:
                                     cin = light.color
-                                ks = object.material.specular_coefficient
-                                cos_0_n = (lr.dot(d*-1))**object.material.roughness
+                                ks = intersection_object.material.specular_coefficient
+                                cos_0_n = (lr.dot(d*-1))**intersection_object.material.roughness
                                 c_specular = cin * ks * cos_0_n
 
-                                # shadow
+                                # calculate shadow
                                 object_maxdist = float('inf')
-                                for object in filter(lambda x: not isinstance(x, Light) and not x is object, self.object_list):
-                                    object_dist = object.intersectionParameter(light_ray)
+                                for shadow_object in [shadow_object for shadow_object in self.object_list if not intersection_object and not isinstance(shadow_object, Light)]:
+                                    object_dist = shadow_object.intersectionParameter(light_ray)
                                     if object_dist:
                                         if object_dist < object_maxdist and object_dist > TOLERANCE:
                                             object_maxdist = object_dist
@@ -117,16 +118,16 @@ class Raytracer(object):
     def intersect(self, level, ray, max_level=MAXLEVEL):
         maxdist = float('inf')
         hitPointData = {}
-        for object in filter(lambda x: not isinstance(x, Light), self.object_list):
-            hitdist = object.intersectionParameter(ray)
+        for intersect_object in [intersect_object for intersect_object in self.object_list if not isinstance(intersect_object, Light)]:
+            hitdist = intersect_object.intersectionParameter(ray)
             if level <= max_level:
                 if hitdist and hitdist < maxdist and hitdist > 0:
                     maxdist = hitdist
 
-                    objects = filter(lambda x: not isinstance(x, Light) and not x is object, self.object_list[:])
+                    objects = [x for x in self.object_list[:] if not isinstance(x, Light) and not x is object]
                     p = ray.pointAtParameter(hitdist)
 
-                    hitPointData['object'] = object
+                    hitPointData['object'] = intersect_object
                     hitPointData['objects'] = objects
                     hitPointData['p'] = p
                     hitPointData['ray'] = ray
@@ -168,25 +169,25 @@ class Raytracer(object):
 
     def computeDirectLight(self, hitPointData):
         p = hitPointData['p']
-        object = hitPointData['object']
+        hit_object = hitPointData['object']
         n = hitPointData['object'].normalAt(hitPointData['p'])
         ray = hitPointData['ray']
         d = self.computeReflectedRay(hitPointData).direction
 
         #TODO refactor light calculation
         # CALC LIGHT
-        for light in filter(lambda x: isinstance(x, Light), self.object_list):
+        for light in [light for light in self.object_list if isinstance(light, Light)]:
             l = (light - p).normalized()
             lr = l.mirror(n)
             light_ray = Ray(p, l)
 
             # ambient
-            ca = object.colorAt(ray)
-            ka = object.material.ambient_coefficient
+            ca = hit_object.colorAt(ray)
+            ka = hit_object.material.ambient_coefficient
             c_ambient = ca * ka
             # diffuse
             cin = light.color
-            kd = object.material.diffuse_coefficient
+            kd = hit_object.material.diffuse_coefficient
             cos_fi = l.dot(n)
             c_diffuse = cin * kd * cos_fi
             # specular
@@ -194,14 +195,14 @@ class Raytracer(object):
                 cin = Color(0, 0, 0)
             else:
                 cin = light.color
-            ks = object.material.specular_coefficient
-            cos_0_n = (lr.dot(d*-1))**object.material.roughness
+            ks = hit_object.material.specular_coefficient
+            cos_0_n = (lr.dot(d*-1))**hit_object.material.roughness
             c_specular = cin * ks * cos_0_n
 
             # shadow
             object_maxdist = float('inf')
-            for object in filter(lambda x: not isinstance(x, Light) and not x is object, self.object_list):
-                object_dist = object.intersectionParameter(light_ray)
+            for shadow_object in [shadow_object for shadow_object in self.object_list if not isinstance(shadow_object, Light) and not shadow_object is hit_object]:
+                object_dist = shadow_object.intersectionParameter(light_ray)
                 if object_dist:
                     if object_dist < object_maxdist and object_dist > TOLERANCE:
                         object_maxdist = object_dist
@@ -211,6 +212,7 @@ class Raytracer(object):
             color = c_ambient + c_diffuse + c_specular
         return color
 
+    @classmethod
     def computeReflectedRay(self, hitPointData):
         return Ray(hitPointData['p'], hitPointData['ray'].direction.mirror(hitPointData['object'].normalAt(hitPointData['p'])))
 
@@ -244,8 +246,8 @@ if __name__ == '__main__':
     tracer.addObject(triangle)
     tracer.addObject(light)
 
-    for object in tracer.object_list:
-        print(object)
+    for y in tracer.object_list:
+        print(y)
 
     if sys.argv[1] == '0':
         img = tracer.render_image()
