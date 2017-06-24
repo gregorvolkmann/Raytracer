@@ -36,7 +36,9 @@ class Raytracer(object):
                 ray = self.calc_ray(x, y)
                 maxdist = float('inf')
                 color = BACKGROUND_COLOR
-                for object in filter(lambda x: not isinstance(x, Light), self.object_list):
+                # objectception wanted by codacy
+                # for object in filter(lambda x: not isinstance(x, Light), self.object_list):
+                for object in [object for object in self.object_list if not isinstance(object, Light)]:
                     hitdist = object.intersectionParameter(ray)
                     if hitdist:
                         if hitdist < maxdist and hitdist > 0:
