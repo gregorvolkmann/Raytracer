@@ -169,25 +169,25 @@ class Raytracer(object):
 
     def computeDirectLight(self, hitPointData):
         p = hitPointData['p']
-        object = hitPointData['object']
+        hit_object = hitPointData['object']
         n = hitPointData['object'].normalAt(hitPointData['p'])
         ray = hitPointData['ray']
         d = self.computeReflectedRay(hitPointData).direction
 
         #TODO refactor light calculation
         # CALC LIGHT
-        for light in filter(lambda x: isinstance(x, Light), self.object_list):
+        for light in [light for light in self.object_list if isinstance(light, Light)]:
             l = (light - p).normalized()
             lr = l.mirror(n)
             light_ray = Ray(p, l)
 
             # ambient
-            ca = object.colorAt(ray)
-            ka = object.material.ambient_coefficient
+            ca = hit_object.colorAt(ray)
+            ka = hit_object.material.ambient_coefficient
             c_ambient = ca * ka
             # diffuse
             cin = light.color
-            kd = object.material.diffuse_coefficient
+            kd = hit_object.material.diffuse_coefficient
             cos_fi = l.dot(n)
             c_diffuse = cin * kd * cos_fi
             # specular
@@ -195,14 +195,14 @@ class Raytracer(object):
                 cin = Color(0, 0, 0)
             else:
                 cin = light.color
-            ks = object.material.specular_coefficient
-            cos_0_n = (lr.dot(d*-1))**object.material.roughness
+            ks = hit_object.material.specular_coefficient
+            cos_0_n = (lr.dot(d*-1))**hit_object.material.roughness
             c_specular = cin * ks * cos_0_n
 
             # shadow
             object_maxdist = float('inf')
-            for object in filter(lambda x: not isinstance(x, Light) and not x is object, self.object_list):
-                object_dist = object.intersectionParameter(light_ray)
+            for shadow_object in [shadow_object for shadow_object in self.object_list if not isinstance(shadow_object, Light) and not shadow_object is hit_object]:
+                object_dist = shadow_object.intersectionParameter(light_ray)
                 if object_dist:
                     if object_dist < object_maxdist and object_dist > TOLERANCE:
                         object_maxdist = object_dist
