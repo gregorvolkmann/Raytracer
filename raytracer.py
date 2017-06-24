@@ -50,7 +50,7 @@ class Raytracer(object):
                             color = intersection_object.colorAt(ray)
 
                             # calculate light
-                            for light in filter(lambda x: isinstance(x, Light), self.object_list):
+                            for light in [light for light in self.object_list if isinstance(light, Light)]:
                                 l = (light - p).normalized()
                                 lr = l.mirror(n)
                                 light_ray = Ray(p, l)
@@ -75,7 +75,7 @@ class Raytracer(object):
 
                                 # calculate shadow
                                 object_maxdist = float('inf')
-                                for shadow_object in filter(lambda x: not isinstance(x, Light) and not x is intersection_object, self.object_list):
+                                for shadow_object in [shadow_object for shadow_object in self.object_list if not intersection_object and not isinstance(shadow_object, Light)]:
                                     object_dist = shadow_object.intersectionParameter(light_ray)
                                     if object_dist:
                                         if object_dist < object_maxdist and object_dist > TOLERANCE:
