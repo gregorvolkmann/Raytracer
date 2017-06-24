@@ -246,8 +246,8 @@ if __name__ == '__main__':
     tracer.addObject(triangle)
     tracer.addObject(light)
 
-    for object in tracer.object_list:
-        print(object)
+    for y in tracer.object_list:
+        print(y)
 
     if sys.argv[1] == '0':
         img = tracer.render_image()
