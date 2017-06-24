@@ -19,7 +19,7 @@ image_width = 400
 image_height = 400
 image = Image.new('RGB', (image_width, image_height))
 
-class Raytracer:
+class Raytracer(object):
     def __init__(self, camera):
         self.camera = camera
         self.object_list = []
