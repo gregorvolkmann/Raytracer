@@ -118,13 +118,13 @@ class Raytracer(object):
     def intersect(self, level, ray, max_level=MAXLEVEL):
         maxdist = float('inf')
         hitPointData = {}
-        for object in filter(lambda x: not isinstance(x, Light), self.object_list):
+        for object in [object for object in self.object_list if not isinstance(object, Light)]:
             hitdist = object.intersectionParameter(ray)
             if level <= max_level:
                 if hitdist and hitdist < maxdist and hitdist > 0:
                     maxdist = hitdist
 
-                    objects = filter(lambda x: not isinstance(x, Light) and not x is object, self.object_list[:])
+                    objects = [x for x in self.object_list[:] if not isinstance(x, Light) and not x is object]
                     p = ray.pointAtParameter(hitdist)
 
                     hitPointData['object'] = object
