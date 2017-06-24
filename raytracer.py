@@ -24,8 +24,8 @@ class Raytracer(object):
         self.camera = camera
         self.object_list = []
 
-    def addObject(self, object):
-        self.object_list.append(object)
+    def addObject(self, o):
+        self.object_list.append(o)
 
     # http://effbot.org/imagingbook/image.htm
     def render_image(self):
@@ -118,8 +118,8 @@ class Raytracer(object):
     def intersect(self, level, ray, max_level=MAXLEVEL):
         maxdist = float('inf')
         hitPointData = {}
-        for object in [object for object in self.object_list if not isinstance(object, Light)]:
-            hitdist = object.intersectionParameter(ray)
+        for intersect_object in [intersect_object for intersect_object in self.object_list if not isinstance(intersect_object, Light)]:
+            hitdist = intersect_object.intersectionParameter(ray)
             if level <= max_level:
                 if hitdist and hitdist < maxdist and hitdist > 0:
                     maxdist = hitdist
@@ -127,7 +127,7 @@ class Raytracer(object):
                     objects = [x for x in self.object_list[:] if not isinstance(x, Light) and not x is object]
                     p = ray.pointAtParameter(hitdist)
 
-                    hitPointData['object'] = object
+                    hitPointData['object'] = intersect_object
                     hitPointData['objects'] = objects
                     hitPointData['p'] = p
                     hitPointData['ray'] = ray
