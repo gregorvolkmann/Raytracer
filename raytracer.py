@@ -212,6 +212,7 @@ class Raytracer(object):
             color = c_ambient + c_diffuse + c_specular
         return color
 
+    @classmethod
     def computeReflectedRay(self, hitPointData):
         return Ray(hitPointData['p'], hitPointData['ray'].direction.mirror(hitPointData['object'].normalAt(hitPointData['p'])))
 
