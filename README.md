@@ -4,7 +4,10 @@
 
 A raytracer I wrote for my course `computer graphics` at Hochschule RheinMain.
 
-![Image of non-recursive Raytrace](https://github.com/gregorvolkmann/Raytracer/master/img.jpg)
+![Image of Raytrace](https://github.com/gregorvolkmann/Raytracer/blob/master/img.png)
+![Image of non-recursive Raytrace](https://github.com/gregorvolkmann/Raytracer/blob/master/img_non_recursive.png)
+![Image of recursive Raytrace](https://github.com/gregorvolkmann/Raytracer/blob/master/img_recursive.png)
+![Image of recursive and aliased Raytrace](https://github.com/gregorvolkmann/Raytracer/blob/master/img_recursive_aliased.png)
 
 
     raytracer.py <mode>
