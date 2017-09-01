@@ -4,6 +4,9 @@
 
 A raytracer I wrote for my course `computer graphics` at Hochschule RheinMain.
 
+![Image of non-recursive Raytrace](https://github.com/gregorvolkmann/Raytracer/master/img.jpg)
+
+
     raytracer.py <mode>
 
     modes:
